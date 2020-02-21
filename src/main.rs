@@ -1,18 +1,27 @@
+extern crate chrono;
+
 use candelabre_core::CandlRenderer;
 use candelabre_windowing::{
     CandlDimension, CandlOptions, CandlSurfaceBuilder,
     CandlWindow
 };
+use chrono::{Duration, Utc};
 use glutin::event::{
     DeviceEvent, ElementState, Event, KeyboardInput,
     StartCause, VirtualKeyCode, WindowEvent
 };
 use glutin::event_loop::{ControlFlow, EventLoop};
-use std::time::{Duration, Instant};
+use std::time::Instant;
 
 use nannig::NannigGraphics;
 
 // HELPERS ====================================================================
+
+fn gap_time() -> std::time::Duration {
+    Duration::seconds(1)
+        .checked_sub(&Duration::microseconds(Utc::now().timestamp_subsec_micros() as i64))
+        .unwrap().to_std().unwrap()
+}
 
 // MAIN =======================================================================
 
@@ -34,13 +43,16 @@ fn main() {
         .unwrap();
 
     let mut active_mod = false;
-    //let start_time = Instant::now();
-    let timer_length = Duration::new(1, 0);
+    let mut redraw = false;
 
     el.run(move |evt, _, ctrl_flow| {
         match evt {
-            Event::NewEvents(StartCause::Init) => *ctrl_flow = ControlFlow::Wait,
-            //Event::NewEvents(StartCause::Init) => *ctrl_flow = ControlFlow::WaitUntil(),
+            Event::NewEvents(StartCause::Init) =>
+                *ctrl_flow = ControlFlow::WaitUntil(Instant::now() + gap_time()),
+            Event::NewEvents(StartCause::ResumeTimeReached {..}) => {
+                redraw = true;
+                *ctrl_flow = ControlFlow::WaitUntil(Instant::now() + gap_time());
+            }
             Event::LoopDestroyed => return,
             Event::DeviceEvent {event: DeviceEvent::ModifiersChanged(mod_state), ..} => {
                 active_mod =
@@ -71,8 +83,13 @@ fn main() {
                 _ => ()
             }
             Event::MainEventsCleared => {
-                //
-                //
+                if redraw {
+                    //
+                    surface.request_redraw();
+                    //
+                    //
+                    redraw = false;
+                }
             }
             Event::RedrawRequested(_) => {
                 //

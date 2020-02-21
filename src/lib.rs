@@ -3,19 +3,33 @@ use gl;
 use nanovg;
 
 pub struct NannigGraphics {
-    context: nanovg::Context,
+    context: Option<nanovg::Context>
     //
 }
 
 impl CandlRenderer<NannigGraphics> for NannigGraphics {
     fn init() -> NannigGraphics {
         //
+        /*
         let context = nanovg::ContextBuilder::new()
-            //.stencil_strokes()
+            .stencil_strokes()
+            .build()
+            .expect("Init of nanovg failed...");
+        */
+        //
+        //NannigGraphics { context }
+        NannigGraphics { context: None }
+    }
+
+    fn finalize(&mut self) {
+        //
+        let context = nanovg::ContextBuilder::new()
+            .stencil_strokes()
             .build()
             .expect("Init of nanovg failed...");
         //
-        NannigGraphics { context }
+        self.context = Some(context);
+        //
     }
 
     fn draw_frame(&self) {
