@@ -31,7 +31,8 @@ fn main() {
     let options = CandlOptions::default()
         .set_vsync(true)
         //.set_decorations(false)
-        .set_transparent(true);
+        //.set_transparent(true)
+        .set_samples(4);
 
     let mut surface = CandlSurfaceBuilder::new()
         .dim(CandlDimension::Classic(800, 400))
