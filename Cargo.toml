@@ -6,9 +6,11 @@ edition = "2018"
 
 [dependencies]
 chrono = "0.4.10"
+#directories = ""
 gl = "0.14.0"
 glutin = "0.23.0"
-nanovg = {version = "1.0.2", features = ["gl3"]}
+nvg = "0.5.9"
+nvg-gl = "0.5.4"
 
 [dependencies.candelabre-core]
 #git = "https://github.com/othelarian/candelabre.git"

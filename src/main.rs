@@ -41,6 +41,12 @@ fn main() {
                 //
                 //store.need_redraw();
                 //
+                for wid in manager.list_window_ids() {
+                    let surface = manager.get_current(wid).unwrap();
+                    let state = surface.state_mut();
+                    state.need_redraw();
+                }
+                //
                 // TODO : ask classic and fullscreen windows to redraw
                 //
                 *ctrl_flow = ControlFlow::WaitUntil(Instant::now() + gap_time());
@@ -59,8 +65,11 @@ fn main() {
                         ..
                     }, ..
                 } => {
-                    //
                     match store.handle_keycode(keycode) {
+                        NannigMessage::Config => {
+                            //
+                            //
+                        }
                         NannigMessage::Nothing => (),
                         NannigMessage::Quit => *ctrl_flow = ControlFlow::Exit
                     }

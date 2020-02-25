@@ -2,11 +2,12 @@ use candelabre_core::CandlUpdate;
 use glutin::event::{ModifiersState, VirtualKeyCode};
 
 pub mod nannig_wins;
-use nannig_wins::NannigGraphics;
+use nannig_wins::NannigWinType;
 
 // NannigMessage ==============================================================
 
 pub enum NannigMessage {
+    Config,
     Nothing,
     Quit
 }
@@ -14,15 +15,25 @@ pub enum NannigMessage {
 // NannigState ================================================================
 
 pub struct NannigState {
-    redraw: bool
+    redraw: bool,
+    //
+    win_type: NannigWinType
+    //
 }
 
-impl CandlUpdate<(), NannigGraphics> for NannigState {
-    fn update(&mut self, _message: (), _graphics: &mut NannigGraphics) {}
+impl CandlUpdate<()> for NannigState {
+    fn update(&mut self, _: ()) {}
 }
 
 impl NannigState {
-    pub fn new() -> Self { Self {redraw: false} }
+    pub fn new(win_type: NannigWinType) -> Self {
+        Self {
+            redraw: false,
+            //
+            win_type
+            //
+        }
+    }
 
     pub fn need_redraw(&mut self) { if !self.redraw { self.redraw = true; } }
 
@@ -55,12 +66,15 @@ impl NannigStore {
 
     pub fn handle_keycode(&mut self, keycode: VirtualKeyCode) -> NannigMessage {
         match keycode {
-            /*
-            VirtualKeyCode::C => {
+            VirtualKeyCode::O => {
                 //
                 // TODO : open configuration
                 //
+                //if !self.logo_mod && !self.
+                //
+                NannigMessage::Nothing
             }
+            /*
             VirtualKeyCode::F => {
                 //
                 // TODO : go (NO TOGGLE) fullscreen and monitors
