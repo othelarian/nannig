@@ -2,16 +2,17 @@
 
 TODO list:
 
-* timely change something about a rectangle
 * change code for the CandlManager
 * handle successive keyboard input
 * integrate konami code system
-* open the configuration window
-* make the second tick
+
+* list screens
 * go fullscreen with a code
 * go topping with fullscreen
+* timely change something about a rectangle
+* open the configuration window
+* make the second tick
 * use 'directories' to handle a conf file
-* list screens
 
 DONE list:
 

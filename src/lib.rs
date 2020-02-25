@@ -1,61 +1,121 @@
-use candelabre_core::CandlRenderer;
-use gl;
-use nanovg::{self, Color};
+use candelabre_core::CandlUpdate;
+use glutin::event::{ModifiersState, VirtualKeyCode};
 
-pub struct NannigGraphics {
-    context: Option<nanovg::Context>,
-    size: (u32, u32),
-    scale_factor: f32
+pub mod nannig_wins;
+use nannig_wins::NannigGraphics;
+
+// NannigMessage ==============================================================
+
+pub enum NannigMessage {
+    Nothing,
+    Quit
 }
 
-impl CandlRenderer<NannigGraphics> for NannigGraphics {
-    fn init() -> NannigGraphics {
-        NannigGraphics {
-            context: None,
-            size: (0, 0),
-            scale_factor: 0.0
-        }
-    }
+// NannigState ================================================================
 
-    fn finalize(&mut self) {
-        let context = nanovg::ContextBuilder::new()
-            .stencil_strokes()
-            .build()
-            .expect("Init of nanovg failed...");
-        self.context = Some(context);
-    }
+pub struct NannigState {
+    redraw: bool
+}
 
-    fn set_scale_factor(&mut self, scale_factor: f64) {
-        self.scale_factor = scale_factor as f32;
-    }
+impl CandlUpdate<(), NannigGraphics> for NannigState {
+    fn update(&mut self, _message: (), _graphics: &mut NannigGraphics) {}
+}
 
-    fn set_size(&mut self, nsize: (u32, u32)) { self.size = nsize; }
+impl NannigState {
+    pub fn new() -> Self { Self {redraw: false} }
 
-    fn draw_frame(&self) {
-        unsafe {
-            gl::ClearColor(0.0, 0.0, 0.0, 1.0);
-            gl::Clear(gl::COLOR_BUFFER_BIT |
-                gl::DEPTH_BUFFER_BIT |
-                gl::STENCIL_BUFFER_BIT
-            );
-        }
-        let (w, h) = self.size;
-        let size = (w as f32, h as f32);
-        self.context.as_ref().unwrap().frame(size, self.scale_factor, |frame| {
-            //
-            frame.path(|path| {
-                path.rect((20.0, 20.0), (50.0, 50.0));
-                //
-                path.fill(Color::new(1.0, 0.0, 0.0, 1.0), Default::default());
-                //
-            }, Default::default());
-            //
-            //
-        });
+    pub fn need_redraw(&mut self) { if !self.redraw { self.redraw = true; } }
+
+    pub fn redraw_asked(&mut self) -> bool {
+        if self.redraw { self.redraw = false; true }
+        else { false }
     }
 }
 
-impl NannigGraphics {
-    //
-    //
+// NannigStore ================================================================
+
+pub struct NannigStore {
+    ctrl_mod: bool,
+    shift_mod: bool,
+    alt_mod: bool,
+    logo_mod: bool,
+    fullscreen_mode: bool
+}
+
+impl NannigStore {
+    pub fn new() -> Self {
+        Self {
+            ctrl_mod: false,
+            shift_mod: false,
+            alt_mod: false,
+            logo_mod: false,
+            fullscreen_mode: false
+        }
+    }
+
+    pub fn handle_keycode(&mut self, keycode: VirtualKeyCode) -> NannigMessage {
+        match keycode {
+            /*
+            VirtualKeyCode::C => {
+                //
+                // TODO : open configuration
+                //
+            }
+            VirtualKeyCode::F => {
+                //
+                // TODO : go (NO TOGGLE) fullscreen and monitors
+                //
+            }
+            VirtualKeyCode::S => {
+                //
+                // TODO : with mod keys, quit fullscreen mode
+                //
+            }
+            */
+            VirtualKeyCode::Q => {
+                if !self.logo_mod && !self.fullscreen_mode &&
+                    self.ctrl_mod && self.alt_mod {
+                        NannigMessage::Quit
+                } else { NannigMessage::Nothing }
+            }
+            /*
+            VirtualKeyCode::Left => {
+                //
+                println!("left");
+                //
+                //
+            }
+            VirtualKeyCode::Right => {
+                //
+                println!("right");
+                //
+                //
+            }
+            VirtualKeyCode::Up => {
+                //
+                println!("up");
+                //
+            }
+            VirtualKeyCode::Down => {
+                //
+                println!("down");
+                //
+            }
+            */
+            _ => {
+                //
+                // TODO : if in a middle of a sequence, stop it
+                //
+                NannigMessage::Nothing
+            }
+        }
+    }
+
+    pub fn update_mods(&mut self, mod_state: ModifiersState) {
+        self.ctrl_mod = mod_state.ctrl();
+        self.shift_mod = mod_state.shift();
+        self.alt_mod = mod_state.alt();
+        self.logo_mod = mod_state.logo();
+    }
+
 }

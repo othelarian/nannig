@@ -1,19 +1,17 @@
 extern crate chrono;
 
-use candelabre_core::CandlRenderer;
 use candelabre_windowing::{
-    CandlDimension, CandlOptions, CandlSurfaceBuilder,
-    CandlWindow
+    CandlManager, CandlWindow
 };
 use chrono::{Duration, Utc};
 use glutin::event::{
     DeviceEvent, ElementState, Event, KeyboardInput,
-    StartCause, VirtualKeyCode, WindowEvent
+    StartCause, WindowEvent
 };
 use glutin::event_loop::{ControlFlow, EventLoop};
 use std::time::Instant;
 
-use nannig::NannigGraphics;
+use nannig::{NannigMessage, NannigStore, nannig_wins};
 
 // HELPERS ====================================================================
 
@@ -28,74 +26,57 @@ fn gap_time() -> std::time::Duration {
 fn main() {
     let el = EventLoop::new();
 
-    let options = CandlOptions::default()
-        .set_vsync(true)
-        //.set_decorations(false)
-        //.set_transparent(true)
-        .set_samples(4);
+    let mut manager = CandlManager::new();
 
-    let mut surface = CandlSurfaceBuilder::new()
-        .dim(CandlDimension::Classic(800, 400))
-        .title("Nannig")
-        .options(options)
-        .render(NannigGraphics::init())
-        .no_state()
-        .build(&el)
+    let _classic = manager
+        .create_window_from_builder(nannig_wins::classic_win(), &el)
         .unwrap();
-
-    let mut active_mod = false;
-    let mut redraw = false;
+    let mut store = NannigStore::new();
 
     el.run(move |evt, _, ctrl_flow| {
         match evt {
             Event::NewEvents(StartCause::Init) =>
                 *ctrl_flow = ControlFlow::WaitUntil(Instant::now() + gap_time()),
             Event::NewEvents(StartCause::ResumeTimeReached {..}) => {
-                redraw = true;
+                //
+                //store.need_redraw();
+                //
+                // TODO : ask classic and fullscreen windows to redraw
+                //
                 *ctrl_flow = ControlFlow::WaitUntil(Instant::now() + gap_time());
             }
             Event::LoopDestroyed => return,
-            Event::DeviceEvent {event: DeviceEvent::ModifiersChanged(mod_state), ..} => {
-                active_mod =
-                    mod_state.shift() || mod_state.ctrl() ||
-                    mod_state.alt() || mod_state.logo();
-            }
-            Event::WindowEvent {event, ..} => match event {
-                WindowEvent::Resized(psize) => surface.resize(psize),
-                WindowEvent::CloseRequested => *ctrl_flow = ControlFlow::Exit,
+            Event::DeviceEvent {
+                event: DeviceEvent::ModifiersChanged(mod_state), ..
+            } => store.update_mods(mod_state),
+            Event::WindowEvent {event, window_id} => match event {
+                WindowEvent::Resized(psize) =>
+                    manager.get_current(window_id).unwrap().resize(psize),
                 WindowEvent::KeyboardInput {
                     input: KeyboardInput {
                         state: ElementState::Released,
-                        virtual_keycode: Some(VirtualKeyCode::Escape),
-                        ..
-                    }, ..
-                } => { if !active_mod { *ctrl_flow = ControlFlow::Exit; } }
-                WindowEvent::KeyboardInput {
-                    input: KeyboardInput {
-                        state: ElementState::Released,
-                        virtual_keycode: Some(VirtualKeyCode::A),
+                        virtual_keycode: Some(keycode),
                         ..
                     }, ..
                 } => {
                     //
-                    //
-                    //
+                    match store.handle_keycode(keycode) {
+                        NannigMessage::Nothing => (),
+                        NannigMessage::Quit => *ctrl_flow = ControlFlow::Exit
+                    }
                 }
                 _ => ()
             }
             Event::MainEventsCleared => {
-                if redraw {
-                    //
-                    surface.request_redraw();
-                    //
-                    //
-                    redraw = false;
+                for wid in manager.list_window_ids() {
+                    let surface = manager.get_current(wid).unwrap();
+                    if surface.state_mut().redraw_asked() {
+                        surface.request_redraw();
+                    }
                 }
             }
-            Event::RedrawRequested(_) => {
-                //
-                surface.draw();
-                //
+            Event::RedrawRequested(win_id) => {
+                manager.get_current(win_id).unwrap().draw();
             }
             _ => ()
         }
