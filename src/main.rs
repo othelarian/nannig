@@ -12,6 +12,7 @@ use glutin::event_loop::{ControlFlow, EventLoop};
 use std::time::Instant;
 
 use nannig::{NannigMessage, NannigStore, nannig_wins};
+use nannig_wins::NannigWinType;
 
 // HELPERS ====================================================================
 
@@ -28,12 +29,12 @@ fn main() {
 
     let mut manager = CandlManager::new();
 
-    let _classic = manager
+    manager
         .create_window_from_builder(nannig_wins::classic_win(), &el)
         .unwrap();
     let mut store = NannigStore::new();
 
-    el.run(move |evt, _, ctrl_flow| {
+    el.run(move |evt, el_wt, ctrl_flow| {
         match evt {
             Event::NewEvents(StartCause::Init) =>
                 *ctrl_flow = ControlFlow::WaitUntil(Instant::now() + gap_time()),
@@ -56,6 +57,16 @@ fn main() {
                 event: DeviceEvent::ModifiersChanged(mod_state), ..
             } => store.update_mods(mod_state),
             Event::WindowEvent {event, window_id} => match event {
+                WindowEvent::CloseRequested => {
+                    match manager.get_current(window_id).unwrap().state().get_type() {
+                        NannigWinType::Classic => *ctrl_flow = ControlFlow::Exit,
+                        NannigWinType::Config => {
+                            manager.remove_window(window_id);
+                            store.toggle_config();
+                        }
+                        _ => ()
+                    };
+                }
                 WindowEvent::Resized(psize) =>
                     manager.get_current(window_id).unwrap().resize(psize),
                 WindowEvent::KeyboardInput {
@@ -67,8 +78,9 @@ fn main() {
                 } => {
                     match store.handle_keycode(keycode) {
                         NannigMessage::Config => {
-                            //
-                            //
+                            manager
+                                .create_window_from_builder(nannig_wins::config_win(), el_wt)
+                                .unwrap();
                         }
                         NannigMessage::Nothing => (),
                         NannigMessage::Quit => *ctrl_flow = ControlFlow::Exit

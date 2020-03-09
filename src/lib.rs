@@ -35,6 +35,8 @@ impl NannigState {
         }
     }
 
+    pub fn get_type(&self) -> NannigWinType { self.win_type.clone() }
+
     pub fn need_redraw(&mut self) { if !self.redraw { self.redraw = true; } }
 
     pub fn redraw_asked(&mut self) -> bool {
@@ -50,7 +52,8 @@ pub struct NannigStore {
     shift_mod: bool,
     alt_mod: bool,
     logo_mod: bool,
-    fullscreen_mode: bool
+    fullscreen_mode: bool,
+    config_open: bool
 }
 
 impl NannigStore {
@@ -60,19 +63,19 @@ impl NannigStore {
             shift_mod: false,
             alt_mod: false,
             logo_mod: false,
-            fullscreen_mode: false
+            fullscreen_mode: false,
+            config_open: false
         }
     }
 
     pub fn handle_keycode(&mut self, keycode: VirtualKeyCode) -> NannigMessage {
         match keycode {
             VirtualKeyCode::O => {
-                //
-                // TODO : open configuration
-                //
-                //if !self.logo_mod && !self.
-                //
-                NannigMessage::Nothing
+                if !self.logo_mod && !self.fullscreen_mode &&
+                    !self.ctrl_mod && self.alt_mod {
+                        self.config_open = true;
+                        NannigMessage::Config
+                } else { NannigMessage::Nothing }
             }
             /*
             VirtualKeyCode::F => {
@@ -124,6 +127,8 @@ impl NannigStore {
             }
         }
     }
+
+    pub fn toggle_config(&mut self) { self.config_open = !self.config_open; }
 
     pub fn update_mods(&mut self, mod_state: ModifiersState) {
         self.ctrl_mod = mod_state.ctrl();

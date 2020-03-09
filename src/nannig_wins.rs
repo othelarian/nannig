@@ -10,7 +10,9 @@ use super::NannigState;
 
 // NannigGraphics =============================================================
 
+#[derive(Clone, Debug)]
 pub enum NannigWinType {
+    Classic,
     Clock,
     Config
 }
@@ -72,8 +74,8 @@ impl CandlRenderer<NannigGraphics, NannigState, ()> for NannigGraphics {
             ctxt.save();
             //
             match state.win_type {
-                NannigWinType::Clock => NannigGraphics::draw_clock(ctxt, state),
-                NannigWinType::Config => NannigGraphics::draw_config(ctxt, state)
+                NannigWinType::Config => NannigGraphics::draw_config(ctxt, state),
+                _ => NannigGraphics::draw_clock(ctxt, state)
             }
             //
             ctxt.restore();
@@ -129,7 +131,7 @@ pub fn classic_win<'a>()
     build_win(
         CandlDimension::Classic(800, 600),
         "Nannig - Classic",
-        NannigWinType::Clock
+        NannigWinType::Classic
     )
 }
 

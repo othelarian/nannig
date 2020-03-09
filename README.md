@@ -2,7 +2,7 @@
 
 TODO list:
 
-* change code for the CandlManager
+
 * handle successive keyboard input
 * integrate konami code system
 
@@ -20,3 +20,5 @@ DONE list:
 * init nanovg
 * use `ControlFlow::WaitUntil()` for input detection
 * show two rectangles with nanovg on the window (one, but it's enough)
+* launch a second window
+* make the classic window closing event a quick quit
