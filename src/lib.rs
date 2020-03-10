@@ -1,5 +1,6 @@
 use candelabre_core::CandlUpdate;
 use glutin::event::{ModifiersState, VirtualKeyCode};
+use glutin::window::WindowId;
 
 pub mod nannig_wins;
 use nannig_wins::NannigWinType;
@@ -7,7 +8,10 @@ use nannig_wins::NannigWinType;
 // NannigMessage ==============================================================
 
 pub enum NannigMessage {
-    Config,
+    Classic,
+    ConfigClose,
+    ConfigOpen,
+    Fullscreen,
     Nothing,
     Quit
 }
@@ -53,7 +57,10 @@ pub struct NannigStore {
     alt_mod: bool,
     logo_mod: bool,
     fullscreen_mode: bool,
-    config_open: bool
+    konami_phase: u16,
+    classic_win: Option<WindowId>,
+    config_win: Option<WindowId>,
+    fullscreen_wins: Vec<WindowId>
 }
 
 impl NannigStore {
@@ -64,71 +71,133 @@ impl NannigStore {
             alt_mod: false,
             logo_mod: false,
             fullscreen_mode: false,
-            config_open: false
+            konami_phase: 0,
+            classic_win: None,
+            config_win: None,
+            fullscreen_wins: Vec::new()
         }
     }
 
     pub fn handle_keycode(&mut self, keycode: VirtualKeyCode) -> NannigMessage {
         match keycode {
+            VirtualKeyCode::A => {
+                if self.fullscreen_mode {
+                    if self.konami_phase == 8 { self.konami_phase = 9; }
+                    else { self.konami_phase = 0; }
+                }
+                NannigMessage::Nothing
+            }
+            VirtualKeyCode::B => {
+                if self.fullscreen_mode {
+                    let valid = self.konami_phase == 9;
+                    self.konami_phase = 0;
+                    if valid {
+                        self.fullscreen_mode = false;
+                        NannigMessage::Classic
+                    }
+                    else { NannigMessage::Nothing }
+                }
+                else { NannigMessage::Nothing }
+            }
+            VirtualKeyCode::F => {
+                if !self.fullscreen_mode && !self.logo_mod &&
+                    self.ctrl_mod && self.alt_mod
+                {
+                    self.fullscreen_mode = true;
+                    self.konami_phase = 0;
+                    NannigMessage::Fullscreen
+                }
+                else {
+                    if self.fullscreen_mode { self.konami_phase = 0; }
+                    NannigMessage::Nothing
+                }
+            }
             VirtualKeyCode::O => {
                 if !self.logo_mod && !self.fullscreen_mode &&
-                    !self.ctrl_mod && self.alt_mod {
-                        self.config_open = true;
-                        NannigMessage::Config
-                } else { NannigMessage::Nothing }
+                    self.ctrl_mod && self.alt_mod
+                {
+                    if self.config_win.is_none() {
+                        NannigMessage::ConfigOpen
+                    } else {
+                        NannigMessage::ConfigClose
+                    }
+                } else {
+                    if self.fullscreen_mode { self.konami_phase = 0; }
+                    NannigMessage::Nothing
+                }
             }
-            /*
-            VirtualKeyCode::F => {
-                //
-                // TODO : go (NO TOGGLE) fullscreen and monitors
-                //
-            }
-            VirtualKeyCode::S => {
-                //
-                // TODO : with mod keys, quit fullscreen mode
-                //
-            }
-            */
             VirtualKeyCode::Q => {
                 if !self.logo_mod && !self.fullscreen_mode &&
                     self.ctrl_mod && self.alt_mod {
                         NannigMessage::Quit
-                } else { NannigMessage::Nothing }
+                } else {
+                    if self.fullscreen_mode { self.konami_phase = 0; }
+                    NannigMessage::Nothing
+                }
             }
-            /*
             VirtualKeyCode::Left => {
-                //
-                println!("left");
-                //
-                //
+                if self.fullscreen_mode {
+                    if self.konami_phase == 4 || self.konami_phase == 6 {
+                        self.konami_phase += 1;
+                    } else { self.konami_phase = 0; }
+                }
+                NannigMessage::Nothing
             }
             VirtualKeyCode::Right => {
-                //
-                println!("right");
-                //
-                //
+                if self.fullscreen_mode {
+                    if self.konami_phase == 5 || self.konami_phase == 7 {
+                        self.konami_phase += 1;
+                    } else { self.konami_phase = 0; }
+                }
+                NannigMessage::Nothing
             }
             VirtualKeyCode::Up => {
-                //
-                println!("up");
-                //
+                if self.fullscreen_mode {
+                    if self.konami_phase < 2 { self.konami_phase += 1; }
+                    else { self.konami_phase = 0; }
+                }
+                NannigMessage::Nothing
             }
             VirtualKeyCode::Down => {
-                //
-                println!("down");
-                //
+                if self.fullscreen_mode {
+                    if self.konami_phase == 2 || self.konami_phase == 3 {
+                        self.konami_phase += 1;
+                    } else { self.konami_phase = 0; }
+                }
+                NannigMessage::Nothing
             }
-            */
             _ => {
-                //
-                // TODO : if in a middle of a sequence, stop it
-                //
+                if self.fullscreen_mode { self.konami_phase = 0; }
                 NannigMessage::Nothing
             }
         }
     }
 
-    pub fn toggle_config(&mut self) { self.config_open = !self.config_open; }
+    pub fn get_classic_win(&self) -> Option<WindowId> {
+        self.classic_win.clone()
+    }
+
+    pub fn set_classic_win(&mut self, classic_win: Option<WindowId>) {
+        self.classic_win = classic_win;
+    }
+
+    pub fn get_config_win(&self) -> Option<WindowId> {
+        self.config_win.clone()
+    }
+
+    pub fn set_config_win(&mut self, config_win: Option<WindowId>) {
+        self.config_win = config_win;
+    }
+
+    pub fn get_fullscreen_wins(&self) -> &Vec<WindowId> { &self.fullscreen_wins }
+
+    pub fn add_fullscreen_win(&mut self, win_id: WindowId) {
+        self.fullscreen_wins.push(win_id);
+    }
+
+    pub fn clear_fullscreen_wins(&mut self) {
+        self.fullscreen_wins.clear();
+    }
 
     pub fn update_mods(&mut self, mod_state: ModifiersState) {
         self.ctrl_mod = mod_state.ctrl();

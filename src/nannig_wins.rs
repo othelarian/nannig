@@ -10,7 +10,7 @@ use super::NannigState;
 
 // NannigGraphics =============================================================
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum NannigWinType {
     Classic,
     Clock,
@@ -74,8 +74,10 @@ impl CandlRenderer<NannigGraphics, NannigState, ()> for NannigGraphics {
             ctxt.save();
             //
             match state.win_type {
-                NannigWinType::Config => NannigGraphics::draw_config(ctxt, state),
-                _ => NannigGraphics::draw_clock(ctxt, state)
+                NannigWinType::Config =>
+                    NannigGraphics::draw_config(ctxt, self.size.clone(), state),
+                _ =>
+                    NannigGraphics::draw_clock(ctxt, self.size.clone(), state)
             }
             //
             ctxt.restore();
@@ -85,7 +87,7 @@ impl CandlRenderer<NannigGraphics, NannigState, ()> for NannigGraphics {
 }
 
 impl NannigGraphics {
-    fn draw_clock(ctxt: &mut NvgContext<Renderer>, _state: &NannigState) {
+    fn draw_clock(ctxt: &mut NvgContext<Renderer>, _size: (u32, u32), _state: &NannigState) {
         //
         ctxt.fill_paint(Color::rgb_i(255, 0, 0));
         //
@@ -95,13 +97,28 @@ impl NannigGraphics {
         //
     }
 
-    fn draw_config(ctxt: &mut NvgContext<Renderer>, _state: &NannigState) {
+    fn draw_config(ctxt: &mut NvgContext<Renderer>, _size: (u32, u32), _state: &NannigState) {
         //
         ctxt.fill_paint(Color::rgb_i(0, 255, 0));
         //
         ctxt.rect(Rect::new(Point::new(10.0, 10.0), Extent::new(100.0, 20.0)));
         //
         ctxt.fill().unwrap();
+        //
+    }
+
+    fn draw_needle(ctxt: &mut NvgContext<Renderer>) {
+        //
+        ctxt.stroke_width(2.0);
+        //
+        ctxt.begin_path();
+        ctxt.reset_transform();
+        //
+        //ctxt.translate(center.0, center.1);
+        //
+        //
+        ctxt.stroke_paint(Color::rgb_i(255, 150, 10));
+        ctxt.stroke().unwrap();
         //
     }
 }
@@ -116,10 +133,12 @@ fn gen_options() -> CandlOptions {
 
 fn build_win(dim: CandlDimension, title: &str, win_type: NannigWinType)
 -> CandlSurfaceBuilder<NannigGraphics, NannigState, ()> {
+    let mut options = gen_options();
+    if win_type == NannigWinType::Clock { options = options.set_on_top(true); }
     CandlSurfaceBuilder::new()
         .dim(dim)
         .title(title)
-        .options(gen_options())
+        .options(options)
         .render(NannigGraphics::init())
         .state(NannigState::new(win_type))
 }
