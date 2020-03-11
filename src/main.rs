@@ -11,7 +11,8 @@ use glutin::event::{
 use glutin::event_loop::{ControlFlow, EventLoop};
 use std::time::Instant;
 
-use nannig::{NannigMessage, NannigStore, nannig_wins};
+use nannig::{NannigMessage, NannigStore, nannig_config, nannig_wins};
+use nannig_config::NannigCfg;
 use nannig_wins::NannigWinType;
 
 // HELPERS ====================================================================
@@ -25,6 +26,15 @@ fn gap_time() -> std::time::Duration {
 // MAIN =======================================================================
 
 fn main() {
+    //
+    // TODO : check config existence
+    //
+    NannigCfg::check_conf_file();
+    //
+    //
+    // TODO : generate NannigCfg
+    //
+
     let el = EventLoop::new();
     let mut manager = CandlManager::new();
 

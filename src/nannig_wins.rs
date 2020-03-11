@@ -87,13 +87,23 @@ impl CandlRenderer<NannigGraphics, NannigState, ()> for NannigGraphics {
 }
 
 impl NannigGraphics {
-    fn draw_clock(ctxt: &mut NvgContext<Renderer>, _size: (u32, u32), _state: &NannigState) {
+    fn draw_clock(ctxt: &mut NvgContext<Renderer>, size: (u32, u32), _state: &NannigState) {
+        //
+        NannigGraphics::draw_needle(ctxt, size, 0.0);
+        //
+        ctxt.begin_path();
+        ctxt.rect(Rect::new(Point::new(20.0, 20.0), Extent::new(50.0, 50.0)));
+        //
+        ctxt.close_path();
         //
         ctxt.fill_paint(Color::rgb_i(255, 0, 0));
         //
-        ctxt.rect(Rect::new(Point::new(20.0, 20.0), Extent::new(50.0, 50.0)));
-        //
         ctxt.fill().unwrap();
+        //
+        //
+        //ctxt.fill_paint(Color::rgb_i(0, 0, 255));
+        //
+        //ctxt.fill().unwrap();
         //
     }
 
@@ -107,18 +117,28 @@ impl NannigGraphics {
         //
     }
 
-    fn draw_needle(ctxt: &mut NvgContext<Renderer>) {
+    fn draw_needle(ctxt: &mut NvgContext<Renderer>, size: (u32, u32), theta: f32) {
         //
-        ctxt.stroke_width(2.0);
+        ctxt.stroke_width(6.0);
         //
         ctxt.begin_path();
         ctxt.reset_transform();
         //
-        //ctxt.translate(center.0, center.1);
+        ctxt.translate((size.0 as f32) /2.0, (size.1 as f32)/2.0);
         //
+        ctxt.rotate(theta);
         //
-        ctxt.stroke_paint(Color::rgb_i(255, 150, 10));
+        ctxt.move_to((0.0, 0.0));
+        //
+        ctxt.line_to((0.0, -15.0));
+        //
+        ctxt.close_path();
+        //
+        ctxt.stroke_paint(Color::rgb_i(255, 250, 110));
+        ctxt.fill_paint(Color::rgb_i(0, 250, 0));
         ctxt.stroke().unwrap();
+        ctxt.fill().unwrap();
+        //
         //
     }
 }

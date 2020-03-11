@@ -5,7 +5,9 @@ TODO list:
 * timely change something about a rectangle
 * make a line which represent the second needle
 * make the second tick
-* use 'directories' to handle a conf file
+* check at startup the existence of a conf file
+* generate a default conf file
+* extract profiles from conf file
 
 DONE list:
 

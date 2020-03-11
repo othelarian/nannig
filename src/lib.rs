@@ -2,6 +2,7 @@ use candelabre_core::CandlUpdate;
 use glutin::event::{ModifiersState, VirtualKeyCode};
 use glutin::window::WindowId;
 
+pub mod nannig_config;
 pub mod nannig_wins;
 use nannig_wins::NannigWinType;
 
