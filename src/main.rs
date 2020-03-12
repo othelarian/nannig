@@ -5,14 +5,14 @@ use candelabre_windowing::{
 };
 use chrono::{Duration, Utc};
 use glutin::event::{
-    DeviceEvent, ElementState, Event, KeyboardInput,
+    ElementState, Event, KeyboardInput,
     StartCause, VirtualKeyCode, WindowEvent
 };
 use glutin::event_loop::{ControlFlow, EventLoop};
 use std::time::Instant;
 
 use nannig::{NannigMessage, NannigStore, nannig_config, nannig_wins};
-use nannig_config::NannigCfg;
+use nannig_config::NannigCfgManager;
 use nannig_wins::NannigWinType;
 
 // HELPERS ====================================================================
@@ -26,13 +26,11 @@ fn gap_time() -> std::time::Duration {
 // MAIN =======================================================================
 
 fn main() {
+    let config_manager = if NannigCfgManager::check_conf_file() {
+        NannigCfgManager::read_conf_file()
+    } else { NannigCfgManager::generate_default_file() };
     //
-    // TODO : check config existence
-    //
-    NannigCfg::check_conf_file();
-    //
-    //
-    // TODO : generate NannigCfg
+    let _config = config_manager.generate_config(None);
     //
 
     let el = EventLoop::new();
@@ -65,9 +63,6 @@ fn main() {
                 *ctrl_flow = ControlFlow::WaitUntil(Instant::now() + gap_time());
             }
             Event::LoopDestroyed => return,
-            Event::DeviceEvent {
-                event: DeviceEvent::ModifiersChanged(mod_state), ..
-            } => store.update_mods(mod_state),
             Event::WindowEvent {event, window_id} => match event {
                 WindowEvent::CloseRequested => {
                     match manager.get_current(window_id).unwrap().state().get_type() {
@@ -81,6 +76,7 @@ fn main() {
                 }
                 WindowEvent::Resized(psize) =>
                     manager.get_current(window_id).unwrap().resize(psize),
+                WindowEvent::ModifiersChanged(mod_state) => store.update_mods(mod_state),
                 WindowEvent::KeyboardInput {
                     input: KeyboardInput {
                         state: ElementState::Released,
