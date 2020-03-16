@@ -19,12 +19,18 @@ impl NannigCfgManager {
         //
     }
 
-    pub fn generate_config(&self, _select: Option<String>)
+    pub fn generate_config(&self, select: Option<String>)
     -> Result<NannigCfg, &'static str> {
-        //
-        //
-        Err("")
-        //
+        if let Some(key) = select {
+            //
+            Err("No profile selection available right now")
+            //
+        } else {
+            //
+            //
+            Ok(NannigCfg::new())
+            //
+        }
     }
 
     pub fn generate_default_file() -> Self {
@@ -119,8 +125,7 @@ impl NannigCfgGroup {
 pub struct NannigCfgNeedle {
     //
     //color: Color,
-    curr_rot: f32,
-    //length: u32,
+    length: u32,
     //negative: u32, //if the needle start before its rotational point
     //thickness: u32
     //

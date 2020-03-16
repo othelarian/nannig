@@ -1,8 +1,11 @@
 use candelabre_core::CandlUpdate;
 use glutin::event::{ModifiersState, VirtualKeyCode};
 use glutin::window::WindowId;
+use std::cell::RefCell;
+use std::rc::Rc;
 
 pub mod nannig_config;
+use nannig_config::NannigCfg;
 pub mod nannig_wins;
 use nannig_wins::NannigWinType;
 
@@ -20,8 +23,8 @@ pub enum NannigMessage {
 // NannigState ================================================================
 
 pub struct NannigState {
+    config: Rc<RefCell<NannigCfg>>,
     redraw: bool,
-    //
     win_type: NannigWinType
     //
 }
@@ -31,8 +34,9 @@ impl CandlUpdate<()> for NannigState {
 }
 
 impl NannigState {
-    pub fn new(win_type: NannigWinType) -> Self {
+    pub fn new(config: Rc<RefCell<NannigCfg>>, win_type: NannigWinType) -> Self {
         Self {
+            config,
             redraw: false,
             //
             win_type
@@ -61,11 +65,12 @@ pub struct NannigStore {
     konami_phase: u16,
     classic_win: Option<WindowId>,
     config_win: Option<WindowId>,
-    fullscreen_wins: Vec<WindowId>
+    fullscreen_wins: Vec<WindowId>,
+    config: Rc<RefCell<NannigCfg>>
 }
 
 impl NannigStore {
-    pub fn new() -> Self {
+    pub fn new(config: NannigCfg) -> Self {
         Self {
             ctrl_mod: false,
             shift_mod: false,
@@ -75,8 +80,16 @@ impl NannigStore {
             konami_phase: 0,
             classic_win: None,
             config_win: None,
-            fullscreen_wins: Vec::new()
+            fullscreen_wins: Vec::new(),
+            config: Rc::new(RefCell::new(config))
         }
+    }
+
+    pub fn update_mods(&mut self, mod_state: ModifiersState) {
+        self.ctrl_mod = mod_state.ctrl();
+        self.shift_mod = mod_state.shift();
+        self.alt_mod = mod_state.alt();
+        self.logo_mod = mod_state.logo();
     }
 
     pub fn handle_keycode(&mut self, keycode: VirtualKeyCode) -> NannigMessage {
@@ -200,11 +213,5 @@ impl NannigStore {
         self.fullscreen_wins.clear();
     }
 
-    pub fn update_mods(&mut self, mod_state: ModifiersState) {
-        self.ctrl_mod = mod_state.ctrl();
-        self.shift_mod = mod_state.shift();
-        self.alt_mod = mod_state.alt();
-        self.logo_mod = mod_state.logo();
-    }
-
+    pub fn get_config(&self) -> Rc<RefCell<NannigCfg>> { Rc::clone(&self.config) }
 }

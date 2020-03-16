@@ -3,10 +3,20 @@ use candelabre_windowing::{
     CandlDimension, CandlOptions,
     CandlSurfaceBuilder
 };
+use chrono::{Datelike, Local, Timelike};
 use gl;
 use nvg_gl::Renderer;
 use nvg::{Color, Context as NvgContext, Extent, Point, Rect};
+use std::cell::RefCell;
+use std::f32::consts::PI;
+use std::rc::Rc;
+
+use super::NannigCfg;
 use super::NannigState;
+
+// Helpers ====================================================================
+
+fn deg2rad(degree: f32) -> f32 { degree * PI / 180.0 }
 
 // NannigGraphics =============================================================
 
@@ -51,8 +61,8 @@ impl CandlRenderer<NannigGraphics, NannigState, ()> for NannigGraphics {
             gl::Viewport(
                 0,
                 0,
-                (w as f32 *self.scale_factor) as i32,
-                (h as f32 *self.scale_factor) as i32
+                w as i32, //(w as f32 *self.scale_factor) as i32,
+                h as i32 //(h as f32 *self.scale_factor) as i32
             );
         }
     }
@@ -89,7 +99,14 @@ impl CandlRenderer<NannigGraphics, NannigState, ()> for NannigGraphics {
 impl NannigGraphics {
     fn draw_clock(ctxt: &mut NvgContext<Renderer>, size: (u32, u32), _state: &NannigState) {
         //
-        NannigGraphics::draw_needle(ctxt, size, 0.0);
+        // TODO : parse datetime
+        //
+        let local = Local::now();
+        //
+        let _y = local.year();
+        let s = local.second();
+        //
+        NannigGraphics::draw_needle(ctxt, size, deg2rad((s as f32) *6.0));
         //
         ctxt.begin_path();
         ctxt.rect(Rect::new(Point::new(20.0, 20.0), Extent::new(50.0, 50.0)));
@@ -128,9 +145,12 @@ impl NannigGraphics {
         //
         ctxt.rotate(theta);
         //
-        ctxt.move_to((0.0, 0.0));
+        ctxt.move_to((0.0, -2.0));
         //
-        ctxt.line_to((0.0, -15.0));
+        ctxt.line_to((0.0, -150.0));
+        //
+        ctxt.move_to((0.0, 2.0));
+        ctxt.line_to((0.0, 150.0));
         //
         ctxt.close_path();
         //
@@ -139,6 +159,7 @@ impl NannigGraphics {
         ctxt.stroke().unwrap();
         ctxt.fill().unwrap();
         //
+        ctxt.reset_transform();
         //
     }
 }
@@ -151,7 +172,7 @@ fn gen_options() -> CandlOptions {
         .set_samples(4)
 }
 
-fn build_win(dim: CandlDimension, title: &str, win_type: NannigWinType)
+fn build_win(dim: CandlDimension, title: &str, config: Rc<RefCell<NannigCfg>>, win_type: NannigWinType)
 -> CandlSurfaceBuilder<NannigGraphics, NannigState, ()> {
     let mut options = gen_options();
     if win_type == NannigWinType::Clock { options = options.set_on_top(true); }
@@ -160,34 +181,37 @@ fn build_win(dim: CandlDimension, title: &str, win_type: NannigWinType)
         .title(title)
         .options(options)
         .render(NannigGraphics::init())
-        .state(NannigState::new(win_type))
+        .state(NannigState::new(config, win_type))
 }
 
 // windows creation functions =================================================
 
-pub fn classic_win<'a>()
+pub fn classic_win<'a>(config: Rc<RefCell<NannigCfg>>)
 -> CandlSurfaceBuilder<'a, NannigGraphics, NannigState, ()> {
     build_win(
         CandlDimension::Classic(800, 600),
         "Nannig - Classic",
+        config,
         NannigWinType::Classic
     )
 }
 
-pub fn fullscreen_win<'a>()
+pub fn fullscreen_win<'a>(config: Rc<RefCell<NannigCfg>>)
 -> CandlSurfaceBuilder<'a, NannigGraphics, NannigState, ()> {
     build_win(
         CandlDimension::Fullscreen,
         "Nannig - FULLSCREEN",
+        config,
         NannigWinType::Clock
     )
 }
 
-pub fn config_win<'a>()
+pub fn config_win<'a>(config: Rc<RefCell<NannigCfg>>)
 -> CandlSurfaceBuilder<'a, NannigGraphics, NannigState, ()> {
     build_win(
         CandlDimension::Classic(400, 800),
         "Nannig - Configuration",
+        config,
         NannigWinType::Config
     )
 }

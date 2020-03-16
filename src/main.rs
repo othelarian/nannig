@@ -25,23 +25,30 @@ fn gap_time() -> std::time::Duration {
 
 // MAIN =======================================================================
 
+/*
+let v = Rc::new(RefCell::new(5));
+let r_a = Rc::clone(&v);
+println!("{}", *r_a.borrow());
+*v.borrow_mut() = 12;
+println!("{}", *r_a.borrow());
+*/
+
 fn main() {
     let config_manager = if NannigCfgManager::check_conf_file() {
         NannigCfgManager::read_conf_file()
     } else { NannigCfgManager::generate_default_file() };
-    //
-    let _config = config_manager.generate_config(None);
-    //
+    let config = config_manager.generate_config(None).unwrap();
+    let mut store = NannigStore::new(config);
 
     let el = EventLoop::new();
     let mut manager = CandlManager::new();
 
     let video_mode = el.primary_monitor().video_modes().next().unwrap();
     let classic_id = manager
-        .create_window_from_builder(nannig_wins::classic_win().video_mode(video_mode), &el)
-        .unwrap();
-
-    let mut store = NannigStore::new();
+        .create_window_from_builder(
+            nannig_wins::classic_win(store.get_config()).video_mode(video_mode),
+            &el
+        ).unwrap();
     store.set_classic_win(Some(classic_id));
 
     el.run(move |evt, el_wt, ctrl_flow| {
@@ -112,7 +119,7 @@ fn main() {
                             for w_id in f_wins { manager.remove_window(w_id.clone()); }
                             store.clear_fullscreen_wins();
                             let classic_id = manager.create_window_from_builder(
-                                nannig_wins::classic_win().video_mode(video_mode),
+                                nannig_wins::classic_win(store.get_config()).video_mode(video_mode),
                                 el_wt
                             ).unwrap();
                             store.set_classic_win(Some(classic_id));
@@ -131,7 +138,7 @@ fn main() {
                                 .next().unwrap();
                             let config_id = manager
                                 .create_window_from_builder(
-                                    nannig_wins::config_win().video_mode(video_mode),
+                                    nannig_wins::config_win(store.get_config()).video_mode(video_mode),
                                     el_wt
                                 )
                                 .unwrap();
@@ -151,7 +158,7 @@ fn main() {
                             manager.remove_window(classic_id);
                             store.set_classic_win(None);
                             for monitor in monitors {
-                                let builder = nannig_wins::fullscreen_win()
+                                let builder = nannig_wins::fullscreen_win(store.get_config())
                                     .video_mode(monitor.video_modes().next().unwrap());
                                 let w_id = manager.create_window_from_builder(builder, el_wt).unwrap();
                                 store.add_fullscreen_win(w_id);
